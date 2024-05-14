@@ -2,6 +2,7 @@ import os
 import platform
 import psutil
 import subprocess
+import socket
 
 
 def get_cpu_name():
@@ -12,14 +13,12 @@ def get_cpu_name():
 
 def get_memory_usage():
     vm = psutil.virtual_memory()
-    return (
-        f"{vm.used / (1024**3):.2f} GB / {vm.total / (1024**3):.2f} GB ({vm.percent}%)"
-    )
+    return f"\033[36m{vm.used / (1024**3):.2f} GB / {vm.total / (1024**3):.2f} GB\033[0m (\033[35m{vm.percent}%\033[0m)"
 
 
 def get_swap_usage():
     swap = psutil.swap_memory()
-    return f"{swap.free / (1024**3):.2f} GB / {swap.total / (1024**3):.2f} GB ({swap.percent}%)"
+    return f"\033[36m{swap.free / (1024**3):.2f} GB / {swap.total / (1024**3):.2f} GB\033[0m (\033[35m{swap.percent}%\033[0m)"
 
 
 def get_disk_usage():
@@ -41,6 +40,30 @@ def get_linux_distribution():
         return distro_info.get("ID", "Unknown"), distro_info.get("VERSION", "Unknown")
 
 
+def get_battery_info():
+    battery_info = subprocess.getoutput("upower -i $(upower -e | grep 'BAT')")
+    percentage = None
+    for line in battery_info.split("\n"):
+        if "percentage" in line:
+            percentage = line.split(":")[1].strip()
+            break
+    state = None
+    for line in battery_info.split("\n"):
+        if "state" in line:
+            state = line.split(":")[1].strip()
+            break
+    state_symbol = "↑" if state == "charging" else "↓" if state == "discharging" else ""
+    return f"{percentage} {state_symbol}"
+
+
+def get_local_ip():
+    try:
+        output = subprocess.getoutput("hostname -I")
+        return output.strip()
+    except Exception as e:
+        return f"Error: {str(e)}"
+
+
 distro_id, distro_version = get_linux_distribution()
 system_info = {
     "Operating System": f"\033[91m{distro_id.capitalize()}\033[0m ({distro_version})",
@@ -50,12 +73,11 @@ system_info = {
     "Shell": os.path.basename(os.environ.get("SHELL")),
     "Display": subprocess.getoutput("xrandr | grep '*' | awk '{print $1}'"),
     "Terminal": os.environ.get("TERM"),
+    "IP": get_local_ip(),
+    "Battery": get_battery_info(),
     "CPU": get_cpu_name(),
     "RAM": get_memory_usage(),
     "Swap": get_swap_usage(),
-    "Battery": subprocess.getoutput(
-        "upower -i $(upower -e | grep 'BAT') | grep 'percentage'"
-    ),
     "Disks": get_disk_usage(),
 }
 
