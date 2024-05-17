@@ -36,7 +36,7 @@ Puedes descargar el .deb a través del siguiente enlace: [yofetch](https://githu
     pip install -r requirements.txt
     ```
 
-3. Ejecuta la aplicación Flask:
+3. Ejecuta la aplicación:
 
     ```bash
     python app.py
