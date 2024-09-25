@@ -1,2 +1,2 @@
 #!/bin/bash
-python3 /home/yoezequiel/programming/yofetch/app.py
+python3 /yofetch.py
